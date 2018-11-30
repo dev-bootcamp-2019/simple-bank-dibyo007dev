@@ -53,7 +53,7 @@ contract SimpleBank {
     function enroll() public returns (bool){
         enrolled[msg.sender] = true;
         emit LogEnrolled(msg.sender);
-        return true;
+        return enrolled[msg.sender];
     }
 
     /// @notice Deposit ether into bank
@@ -81,7 +81,9 @@ contract SimpleBank {
            to the user attempting to withdraw. 
            return the user's balance.*/
         require(enrolled[msg.sender] == true, "Withdrawee doesnt have account in Bank");
-        balances[msg.sender] -= msg.value;
+        require(balances[msg.sender] >= withdrawAmount, "Not Enough Balance");
+        require(withdrawAmount > 0, "Invald input");
+        balances[msg.sender] -= withdrawAmount;
         emit LogWithdrawal(msg.sender, withdrawAmount, balances[msg.sender]);
         return balances[msg.sender];
     }
