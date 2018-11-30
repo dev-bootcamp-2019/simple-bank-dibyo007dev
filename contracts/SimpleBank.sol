@@ -6,13 +6,13 @@ contract SimpleBank {
     //
     
     /* Fill in the keyword. Hint: We want to protect our users balance from other contracts*/
-    mapping (address => uint) balances;
+    mapping (address => uint) private balances;
     
     /* Fill in the keyword. We want to create a getter function and allow contracts to be able to see if a user is enrolled.  */
-    mapping (address => bool) enrolled;
+    mapping (address => bool) public enrolled;
 
     /* Let's make sure everyone knows who owns the bank. Use the appropriate keyword for this*/
-    address owner;
+    address public owner;
     
     //
     // Events - publicize actions to external listeners
@@ -42,7 +42,7 @@ contract SimpleBank {
     /// @return The balance of the user
     // A SPECIAL KEYWORD prevents function from editing state variables;
     // allows function to run locally/off blockchain
-    function balance() public returns (uint) {
+    function balance() public view returns (uint) {
         /* Get the balance of the sender of this transaction */
         return balances[msg.sender];
     }
@@ -64,7 +64,7 @@ contract SimpleBank {
     function deposit() public payable returns (uint) {
         /* Add the amount to the user's balance, call the event associated with a deposit,
           then return the balance of the user */
-        require(enrolled[msg.sender] == true, "Sender not enrolled , Deposit is aborted ");
+        require(enrolled[msg.sender], "Sender not enrolled , Deposit is aborted ");
         balances[msg.sender] += msg.value;
         emit LogDepositMade(msg.sender,msg.value);
         return balances[msg.sender];
@@ -80,12 +80,13 @@ contract SimpleBank {
            Subtract the amount from the sender's balance, and try to send that amount of ether
            to the user attempting to withdraw. 
            return the user's balance.*/
-        require(enrolled[msg.sender] == true, "Withdrawee doesnt have account in Bank");
+        require(enrolled[msg.sender], "Withdrawee doesnt have account in Bank");
         require(balances[msg.sender] >= withdrawAmount, "Not Enough Balance");
         require(withdrawAmount > 0, "Invald input");
         balances[msg.sender] -= withdrawAmount;
         emit LogWithdrawal(msg.sender, withdrawAmount, balances[msg.sender]);
-        return balances[msg.sender];
+        msg.sender.transfer(withdrawAmount);
+        return (balances[msg.sender]);
     }
 
     // Fallback function - Called if other functions don't match call or
@@ -93,7 +94,7 @@ contract SimpleBank {
     // Typically, called when invalid data is sent
     // Added so ether sent to this contract is reverted if the contract fails
     // otherwise, the sender's money is transferred to contract
-    function() {
+    function() payable {
         revert();
     }
 }
